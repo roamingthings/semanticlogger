@@ -1,5 +1,7 @@
 = Semantic Logger
 
+image:https://circleci.com/gh/roamingthings/semanticlogger.png["Build Status", link="https://circleci.com/gh/roamingthings/semanticlogger"]
+
 This little library is inspired by the talk _Observability in einer Microservice Welt_ held on http://bed-con.org/2018/home[Berlin Expert Days 2018]
 by Andreas Weigel and Jakob Fels.
 
