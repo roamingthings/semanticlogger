@@ -1,0 +1,29 @@
+= Semantic Logger
+
+This little library is inspired by the talk _Observability in einer Microservice Welt_ held on http://bed-con.org/2018/home[Berlin Expert Days 2018]
+by Andreas Weigel and Jakob Fels.
+
+If you prefer to have some semantic to your logging and improve code readability you can use the `SemanticLogger`
+and its `SemanticLoggerFactory` which adds a thin layer around Slf4j.
+
+The `SemanticLoggerFactory` can be used like the Slf4j `LoggerFactory`
+to create a new Logger by class, name or a delegateLogger:
+
+----
+SemanticLogger logger = SemanticLogger. getLogger(SomeClass.class);
+
+SemanticLogger logger = SemanticLogger. getLogger("SomeLoggerName");
+
+Logger delegateLogger = org.slf4j.LoggerFactory.getLogger(SomeClass.class);
+SemanticLogger logger = SemanticLogger. getLogger(delegateLogger);
+----
+
+The `SemanticLogger` itself provides the following methods for logging:
+
+----
+SemanticLogger log = SemanticLoggerFactory.getLogger(MyClass.class);
+log.forTestPurpose(...);                // will log a debug event
+log.asExpectedByDefault(...);           // will log an info event
+log.toInvestigateTomorrow(...);         // will log a warn event
+log.wakeMeUpInTheMiddleOfTheNight(...); // will log an error event
+----
