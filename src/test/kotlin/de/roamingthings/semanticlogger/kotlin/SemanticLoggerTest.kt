@@ -15,7 +15,7 @@
  */
 package de.roamingthings.semanticlogger.kotlin
 
-import de.roamingthings.semanticlogger.java.SemanticLogger
+import de.roamingthings.semanticlogger.SemanticLogger
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Matchers

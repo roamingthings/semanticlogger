@@ -15,7 +15,7 @@
  */
 package de.roamingthings.semanticlogger.kotlin
 
-import de.roamingthings.semanticlogger.java.SemanticLoggerFactory.getLogger
+import de.roamingthings.semanticlogger.SemanticLoggerFactory.getLogger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock

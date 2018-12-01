@@ -15,11 +15,12 @@
  */
 package de.roamingthings.semanticlogger.java;
 
+import de.roamingthings.semanticlogger.SemanticLogger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
-import static de.roamingthings.semanticlogger.java.SemanticLoggerFactory.getLogger;
+import static de.roamingthings.semanticlogger.SemanticLoggerFactory.getLogger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
