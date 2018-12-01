@@ -4,6 +4,7 @@ import java.time.Year
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer.id
+import java.lang.System.getenv
 
 buildscript {
     repositories {
@@ -228,12 +229,12 @@ publishing {
                             (if (project.hasProperty("nexusUsername"))
                                 project.properties["nexusUsername"]
                             else
-                                System.getenv("nexusUsername")) as String
+                                getenv("nexusUsername")) as String
                     password =
                             (if (project.hasProperty("nexusPassword"))
                                 project.properties["nexusPassword"]
                             else
-                                System.getenv("nexusPassword")) as String
+                                getenv("nexusPassword")) as String
                 }
             }
         }
