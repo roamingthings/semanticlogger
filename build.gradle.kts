@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Year
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer.id
 
 buildscript {
     repositories {
@@ -15,13 +16,16 @@ buildscript {
 plugins {
     kotlin("jvm") version "1.3.10"
     `java-library`
-    `maven-publish`
     id("com.github.hierynomus.license") version "0.14.0"
+    id("com.bmuschko.nexus") version "2.3.1"
 }
 
 if (JavaVersion.current().isJava9Compatible) {
-    tasks.withType<JavaCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "8")) }
     tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "8")) }
+}
+
+if (JavaVersion.current().isJava8Compatible) {
+    tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("Xdoclint:none", "-quiet")) }
 }
 
 gradle.taskGraph.whenReady {
@@ -68,11 +72,15 @@ tasks {
         options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
     }
 
-    "test"(Test::class) {
+    named<Test>("test") {
+        useJUnitPlatform()
         testLogging {
+            events("passed", "skipped", "failed")
             showExceptions = true
             showStackTraces = true
-            exceptionFormat = TestExceptionFormat.FULL
+            exceptionFormat = FULL
+            showCauses = true
+            showStackTraces = true
         }
     }
 }
@@ -95,7 +103,8 @@ tasks {
         main = "com.github.shyiko.ktlint.Main"
         args("**/*.gradle.kts", "**/*.kt")
     }
-    "check" {
+
+    named<Task>("check") {
         dependsOn(verifyKtlint)
     }
 
@@ -108,11 +117,15 @@ tasks {
 }
 
 license {
-    header = rootProject.file("LICENSE.header")
+    header = rootProject.file("doc/APL.header")
     skipExistingHeaders = true
     mapping("java", "SLASHSTAR_STYLE")
     mapping("kt", "SLASHSTAR_STYLE")
+    include("**/*.java")
+    include("**/*.kt")
     exclude("**/default*.*")
+    exclude("**/*Test*.kt")
+    exclude("**/*IT.kt")
 
     (this as ExtensionAware).extra["year"] = Year.now()
     (this as ExtensionAware).extra["name"] = "Alexander Sparkowsky"
@@ -125,3 +138,4 @@ val Process.text: String
     get() = inputStream.bufferedReader().readText()
 
 apply(from = "gradle/circleci.gradle.kts")
+apply(from = "gradle/publish.gradle")
