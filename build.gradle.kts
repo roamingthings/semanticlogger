@@ -2,6 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.Year
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer.id
 
 buildscript {
@@ -20,6 +21,7 @@ plugins {
     signing
     kotlin("jvm") version "1.3.10"
     id("com.github.hierynomus.license") version "0.14.0"
+    id("org.jetbrains.dokka") version "0.9.17"
 }
 
 group = "de.roamingthings"
@@ -97,6 +99,34 @@ tasks {
         main = "com.github.shyiko.ktlint.Main"
         args("-F", "**/*.gradle.kts", "**/*.kt")
     }
+
+    register("dokkaJavadoc", DokkaTask::class) {
+        outputFormat = "javadoc"
+        outputDirectory = "$buildDir/dokkaJavadoc"
+    }
+/*
+    val dokka by registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
+    dependsOn jar
+            group = "documentation"
+    description = "Generates Kotlin API documentation."
+    moduleName = "reactor-core"
+    jdkVersion = 8
+
+    outputFormat = "html"
+    outputDirectory = new File(project.buildDir, "docs/kdoc")
+
+    //this is needed so that links to java classes are resolved
+    doFirst {
+        classpath += project.jar.outputs.files.getFiles()
+        classpath += project.sourceSets.main.compileClasspath
+    }
+    //this is needed so that the kdoc only generates for kotlin classes
+    //(default kotlinTasks sourceSet also includes java)
+    kotlinTasks {
+    }
+    processConfigurations = []
+    sourceDirs = files("src/main/kotlin")
+*/
 }
 
 /***
@@ -148,7 +178,7 @@ task<Jar>("sourcesJar") {
 }
 
 task<Jar>("javadocJar") {
-    from(tasks["javadoc"])
+    from(tasks["dokkaJavadoc"])
     classifier = "javadoc"
 }
 
