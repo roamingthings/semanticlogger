@@ -105,29 +105,6 @@ tasks {
         outputFormat = "javadoc"
         outputDirectory = "$buildDir/dokkaJavadoc"
     }
-/*
-    val dokka by registering(org.jetbrains.dokka.gradle.DokkaTask::class) {
-    dependsOn jar
-            group = "documentation"
-    description = "Generates Kotlin API documentation."
-    moduleName = "reactor-core"
-    jdkVersion = 8
-
-    outputFormat = "html"
-    outputDirectory = new File(project.buildDir, "docs/kdoc")
-
-    //this is needed so that links to java classes are resolved
-    doFirst {
-        classpath += project.jar.outputs.files.getFiles()
-        classpath += project.sourceSets.main.compileClasspath
-    }
-    //this is needed so that the kdoc only generates for kotlin classes
-    //(default kotlinTasks sourceSet also includes java)
-    kotlinTasks {
-    }
-    processConfigurations = []
-    sourceDirs = files("src/main/kotlin")
-*/
 }
 
 /***
