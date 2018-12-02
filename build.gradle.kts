@@ -23,6 +23,7 @@ plugins {
     kotlin("jvm") version "1.3.10"
     id("com.github.hierynomus.license") version "0.14.0"
     id("org.jetbrains.dokka") version "0.9.17"
+    id("net.researchgate.release") version "2.6.0"
 }
 
 group = "de.roamingthings"
