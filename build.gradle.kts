@@ -3,6 +3,8 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 import java.time.Year
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 plugins {
     `java-library`
@@ -16,6 +18,22 @@ plugins {
 }
 
 group = "de.roamingthings"
+
+fun envConfig() = object : ReadOnlyProperty<Any?, String?> {
+    override fun getValue(thisRef: Any?, property: KProperty<*>): String? =
+        if (ext.has(property.name)) {
+            ext[property.name] as? String
+        } else {
+            System.getenv(property.name)
+        }
+}
+
+val repositoryUser by envConfig()
+val repositoryPassword by envConfig()
+val signingKeyId by envConfig()
+val signingSecretKey by envConfig()
+val signingPassword by envConfig()
+val signingSecretKeyRingFile by envConfig()
 
 repositories {
     mavenCentral()
@@ -154,8 +172,6 @@ val dokkaJar by tasks.creating(Jar::class) {
 /**
  * Publishing
  */
-val MAVEN_UPLOAD_USER: String? by project
-val MAVEN_UPLOAD_PWD: String? by project
 publishing {
     repositories {
         maven {
@@ -164,8 +180,8 @@ publishing {
             val snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
             url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
             credentials {
-                username = MAVEN_UPLOAD_USER ?: ""
-                password = MAVEN_UPLOAD_PWD ?: ""
+                username = repositoryUser
+                password = repositoryPassword
             }
         }
     }
@@ -202,17 +218,27 @@ publishing {
     }
 }
 
-val PGP_SIGNING_KEY = System.getenv("PGP_SIGNING_KEY")
-val PGP_SIGNING_PASSWORD: String? by project
-tasks.withType<Sign> {
-    onlyIf { PGP_SIGNING_KEY != null && PGP_SIGNING_PASSWORD != null }
+signing {
+    if (!signingKeyId.isNullOrEmpty()) {
+        project.ext["signing.keyId"] = signingKeyId
+        project.ext["signing.password"] = signingPassword
+        project.ext["signing.secretKeyRingFile"] = signingSecretKeyRingFile
+
+        logger.info("Signing key id provided. Sign artifacts for $project.")
+
+        isRequired = true
+    } else if (!signingSecretKey.isNullOrEmpty()) {
+        useInMemoryPgpKeys(signingSecretKey, signingPassword)
+    } else {
+        logger.warn("${project.name}: Signing key not provided. Disable signing for  $project.")
+        isRequired = false
+    }
+
+    sign(publishing.publications)
 }
 
-signing {
-    val signingKey = PGP_SIGNING_KEY ?: ""
-    val signingPassword = PGP_SIGNING_PASSWORD ?: ""
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign(publishing.publications["mavenJava"])
+release {
+    buildTasks = listOf("build", "publish")
 }
 
 tasks {
