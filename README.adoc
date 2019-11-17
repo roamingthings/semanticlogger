@@ -29,3 +29,14 @@ log.asExpectedByDefault(...);           // will log an info event
 log.toInvestigateTomorrow(...);         // will log a warn event
 log.wakeMeUpInTheMiddleOfTheNight(...); // will log an error event
 ----
+
+== Publishing
+
+Export the secret keys to a keyring:
+----
+gpg --keyring secring.gpg --export-secret-keys > ~/.gnupg/secring.gpg
+----
+
+----
+ ./gradlew --console=plain -PrepositoryUser=<user> -PrepositoryPassword="<password>" -PsigningKeyId=0x12345678 -PsigningPassword="<key_password>" -PsigningSecretKeyRingFile="/path/to/secring.gpg"
+----
