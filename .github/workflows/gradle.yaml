@@ -15,5 +15,8 @@ jobs:
           java-version: 11
       - name: Build and Publish
         env:
-          PGP_SIGNING_KEY: ${{ secrets.PGP_SIGNING_KEY }}
-        run: ./gradlew --console=plain -PMAVEN_UPLOAD_USER="${{ secrets.SONATYPE_USER }}" -PMAVEN_UPLOAD_PWD="${{ secrets.SONATYPE_PASSWORD }}" -PPGP_SIGNING_PASSWORD="${{ secrets.PGP_SIGNING_PASSWORD }}" build publish
+          signingSecretKey: ${{ secrets.PGP_SIGNING_KEY }}
+          repositoryUser: ${{ secrets.SONATYPE_USER }}
+          repositoryPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          signingPassword: ${{ secrets.PGP_SIGNING_PASSWORD }}
+        run: ./gradlew --console=plain build publish
