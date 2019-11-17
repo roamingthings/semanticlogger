@@ -1,29 +1,18 @@
 import org.gradle.api.JavaVersion.VERSION_1_8
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.time.Year
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer.id
-import java.lang.System.getenv
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${extra["kotlinVersion"]}")
-    }
-}
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+import java.time.Year
 
 plugins {
     `java-library`
     `maven-publish`
     signing
-    kotlin("jvm") version "1.3.10"
-    id("com.github.hierynomus.license") version "0.14.0"
-    id("org.jetbrains.dokka") version "0.9.17"
-    id("net.researchgate.release") version "2.6.0"
+    kotlin("jvm") version "1.3.50"
+    id("com.github.hierynomus.license") version "0.15.0"
+    id("org.jetbrains.dokka") version "0.10.0"
+    id("net.researchgate.release") version "2.8.1"
+    id("org.jlleitschuh.gradle.ktlint") version "9.1.1"
 }
 
 group = "de.roamingthings"
@@ -34,77 +23,75 @@ repositories {
 }
 
 dependencies {
+    val assertjVersion: String by project
+    val junitJupiterVersion: String by project
+    val lombokVersion: String by project
+    val mockitoVersion: String by project
+    val slf4jVersion: String by project
+
     compile(kotlin("stdlib-jdk8"))
-    compile("org.slf4j:slf4j-api:1.7.25")
+    compile("org.slf4j:slf4j-api:$slf4jVersion")
 
-    annotationProcessor("org.projectlombok:lombok:${extra["lombokVersion"]}")
-    compileOnly("org.projectlombok:lombok:${extra["lombokVersion"]}")
+    annotationProcessor("org.projectlombok:lombok:$lombokVersion")
+    compileOnly("org.projectlombok:lombok:$lombokVersion")
 
-    testImplementation("junit:junit:${extra["junit4Version"]}")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${extra["junitJupiterVersion"]}")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${extra["junitJupiterVersion"]}")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${extra["junitJupiterVersion"]}")
+    testCompile("org.assertj:assertj-core:$assertjVersion")
+    testCompile("org.mockito:mockito-core:$mockitoVersion")
+}
 
-    testCompile("org.junit.platform:junit-platform-launcher:${extra["junitJupiterPlatformVersion"]}")
-    testCompile("org.junit.platform:junit-platform-runner:${extra["junitJupiterPlatformVersion"]}")
-    testCompile("org.assertj:assertj-core:${extra["assertjVersion"]}")
-    testCompile("org.mockito:mockito-all:${extra["mockitoVersion"]}")
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showExceptions = true
+        showStackTraces = true
+        exceptionFormat = FULL
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+    }
 }
 
 /***
- * Test Configuration and Tasks
+ * Linting
+ */
+ktlint {
+    version.set("0.35.0")
+    verbose.set(true)
+    outputToConsole.set(true)
+    coloredOutput.set(true)
+    reporters {
+        reporter(ReporterType.CHECKSTYLE)
+        reporter(ReporterType.JSON)
+    }
+    filter {
+        exclude("**/style-violations.kt")
+    }
+}
+
+tasks.named("compileKotlin") {
+    dependsOn("ktlintCheck")
+}
+
+/***
+ * Documentation generation
  */
 tasks {
-    named<Test>("test") {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
-            showExceptions = true
-            showStackTraces = true
-            exceptionFormat = FULL
-            showCauses = true
-            showStackTraces = true
+    dokka {
+        outputFormat = "html"
+        outputDirectory = "$buildDir/javadoc"
+        configuration {
+            moduleName = rootProject.name
         }
-    }
-}
-
-/**
- * Kotlin Configuration and Tasks
- */
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
-}
-
-val ktlint by configurations.creating
-
-dependencies {
-    ktlint("com.github.shyiko:ktlint:0.29.0")
-}
-
-tasks {
-    val verifyKtlint by registering(JavaExec::class) {
-        group = "verification"
-        description = "Check Kotlin code style."
-        classpath = ktlint
-        main = "com.github.shyiko.ktlint.Main"
-        args("**/*.gradle.kts", "**/*.kt")
-    }
-
-    named<Task>("compileKotlin") {
-        dependsOn(verifyKtlint)
-    }
-
-    register("ktlint", JavaExec::class) {
-        description = "Fix Kotlin code style violations."
-        classpath = ktlint
-        main = "com.github.shyiko.ktlint.Main"
-        args("-F", "**/*.gradle.kts", "**/*.kt")
-    }
-
-    register("dokkaJavadoc", DokkaTask::class) {
-        outputFormat = "javadoc"
-        outputDirectory = "$buildDir/dokkaJavadoc"
     }
 }
 
@@ -152,25 +139,42 @@ license {
  * Distribution
  */
 task<Jar>("sourcesJar") {
-    from(sourceSets["main"].allSource)
-    classifier = "sources"
+    archiveClassifier.set("sources")
+    from(sourceSets.getByName("main").allSource)
 }
 
-task<Jar>("javadocJar") {
-    from(tasks["dokkaJavadoc"])
-    classifier = "javadoc"
+val dokkaJar by tasks.creating(Jar::class) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles Kotlin docs with Dokka"
+    archiveClassifier.set("javadoc")
+    from(tasks.dokka)
+    dependsOn(tasks.dokka)
 }
 
 /**
  * Publishing
  */
+val MAVEN_UPLOAD_USER: String? by project
+val MAVEN_UPLOAD_PWD: String? by project
 publishing {
+    repositories {
+        maven {
+            name = "MavenCentral"
+            val releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            val snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
+            credentials {
+                username = MAVEN_UPLOAD_USER ?: ""
+                password = MAVEN_UPLOAD_PWD ?: ""
+            }
+        }
+    }
     publications {
         create<MavenPublication>("mavenJava") {
-            artifactId = "semanticlogger"
             from(components["java"])
             artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
+            artifact(tasks["dokkaJar"])
+
             pom {
                 name.set("Semantic Logging")
                 description.set("A Library to add semantic logging to your JVM project using SLF4J")
@@ -189,43 +193,25 @@ publishing {
                     }
                 }
                 scm {
-                    connection.set("scm:git@github.com:roamingthings/semanticlogger.git")
-                    developerConnection.set("scm:git@github.com:roamingthings/semanticlogger.git")
+                    connection.set("https://github.com/roamingthings/semanticlogger.git")
+                    developerConnection.set("https://github.com/roamingthings/semanticlogger.git")
                     url.set("https://github.com/roamingthings/semanticlogger")
                 }
             }
         }
     }
-    repositories {
-        maven {
-            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
-            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
-            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            authentication {
-                credentials {
-                    username =
-                            (if (project.hasProperty("nexusUsername"))
-                                project.properties["nexusUsername"]
-                            else
-                                getenv("nexusUsername")) as String
-                    password =
-                            (if (project.hasProperty("nexusPassword"))
-                                project.properties["nexusPassword"]
-                            else
-                                getenv("nexusPassword")) as String
-                }
-            }
-        }
-    }
 }
 
+val PGP_SIGNING_KEY = System.getenv("PGP_SIGNING_KEY")
+val PGP_SIGNING_PASSWORD: String? by project
 tasks.withType<Sign> {
-    onlyIf { project.hasProperty("signing.keyId") }
+    onlyIf { PGP_SIGNING_KEY != null && PGP_SIGNING_PASSWORD != null }
 }
 
 signing {
-    useGpgCmd()
-    isRequired = false
+    val signingKey = PGP_SIGNING_KEY ?: ""
+    val signingPassword = PGP_SIGNING_PASSWORD ?: ""
+    useInMemoryPgpKeys(signingKey, signingPassword)
     sign(publishing.publications["mavenJava"])
 }
 
@@ -236,11 +222,3 @@ tasks {
         }
     }
 }
-
-fun String.execute(envp: Array<String>?, workingDir: File?) =
-    Runtime.getRuntime().exec(this, envp, workingDir)
-
-val Process.text: String
-    get() = inputStream.bufferedReader().readText()
-
-apply(from = "gradle/circleci.gradle.kts")
