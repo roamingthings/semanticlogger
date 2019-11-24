@@ -1,34 +1,16 @@
+import de.roamingthings.gradle.envConfig
 import org.gradle.api.JavaVersion.VERSION_1_8
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-import java.time.Year
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 
 plugins {
     `java-library`
     `maven-publish`
-    signing
-    id("com.github.hierynomus.license") version "0.15.0"
     id("net.researchgate.release") version "2.8.1"
+    id("de.roamingthings.jvmtest")
+    id("de.roamingthings.librarylicense")
+    id("de.roamingthings.librarysigning")
 }
 
 group = "de.roamingthings"
-
-fun envConfig() = object : ReadOnlyProperty<Any?, String?> {
-    override fun getValue(thisRef: Any?, property: KProperty<*>): String? =
-        if (ext.has(property.name)) {
-            ext[property.name] as? String
-        } else {
-            System.getenv(property.name)
-        }
-}
-
-val repositoryUser by envConfig()
-val repositoryPassword by envConfig()
-val signingKeyId by envConfig()
-val signingSecretKey by envConfig()
-val signingPassword by envConfig()
-val signingSecretKeyRingFile by envConfig()
 
 repositories {
     mavenCentral()
@@ -36,74 +18,28 @@ repositories {
 }
 
 dependencies {
-    val assertjVersion: String by project
-    val junitJupiterVersion: String by project
     val lombokVersion: String by project
-    val mockitoVersion: String by project
     val slf4jVersion: String by project
 
     compile("org.slf4j:slf4j-api:$slf4jVersion")
 
     annotationProcessor("org.projectlombok:lombok:$lombokVersion")
     compileOnly("org.projectlombok:lombok:$lombokVersion")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-
-    testCompile("org.assertj:assertj-core:$assertjVersion")
-    testCompile("org.mockito:mockito-core:$mockitoVersion")
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
-        showExceptions = true
-        showStackTraces = true
-        exceptionFormat = FULL
-        showCauses = true
-        showStackTraces = true
-    }
 }
 
 /***
  * Java Configuration and Tasks
  */
-if (JavaVersion.current().isJava8Compatible) {
-    tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("Xdoclint:none", "-quiet")) }
-}
-
-if (JavaVersion.current().isJava9Compatible) {
-    tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "8")) }
-}
-
 java {
     sourceCompatibility = VERSION_1_8
     targetCompatibility = VERSION_1_8
 }
 
-tasks {
-    withType<JavaCompile>().configureEach {
-        options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
+tasks.withType<JavaCompile>().configureEach {
+    if (JavaVersion.current().isJava9Compatible) {
+        options.compilerArgs.addAll(arrayOf("--release", "8"))
     }
-}
-
-/***
- * License Handling
- */
-license {
-    header = rootProject.file("doc/APL.header")
-    skipExistingHeaders = true
-    mapping("java", "SLASHSTAR_STYLE")
-    mapping("kt", "SLASHSTAR_STYLE")
-    include("**/*.java")
-    include("**/*.kt")
-    exclude("**/default*.*")
-    exclude("**/*Test*.kt")
-    exclude("**/*IT.kt")
-
-    (this as ExtensionAware).extra["year"] = Year.now()
-    (this as ExtensionAware).extra["name"] = "Alexander Sparkowsky"
+    options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
 }
 
 /**
@@ -132,6 +68,8 @@ tasks {
 /**
  * Publishing
  */
+val repositoryUser by envConfig()
+val repositoryPassword by envConfig()
 publishing {
     repositories {
         maven {
@@ -179,33 +117,15 @@ publishing {
     }
 }
 
-signing {
-    if (!signingKeyId.isNullOrEmpty()) {
-        project.ext["signing.keyId"] = signingKeyId
-        project.ext["signing.password"] = signingPassword
-        project.ext["signing.secretKeyRingFile"] = signingSecretKeyRingFile
-
-        logger.info("Signing key id provided. Sign artifacts for $project.")
-
-        isRequired = true
-    } else if (!signingSecretKey.isNullOrEmpty()) {
-        useInMemoryPgpKeys(signingSecretKey, signingPassword)
-    } else {
-        logger.warn("${project.name}: Signing key not provided. Disable signing for  $project.")
-        isRequired = false
-    }
-
-    sign(publishing.publications)
-}
-
 release {
-    buildTasks = listOf("build", "publish")
+    buildTasks = listOf("build")
 }
 
-tasks {
-    named<Javadoc>("javadoc") {
-        if (JavaVersion.current().isJava9Compatible) {
-            (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-        }
+tasks.withType<Javadoc>() {
+    if (JavaVersion.current().isJava8Compatible) {
+        (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
+    }
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
 }

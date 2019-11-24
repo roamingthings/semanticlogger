@@ -1,6 +1,8 @@
 = Semantic Logger
 
 image:https://github.com/roamingthings/semanticlogger/workflows/Java%20CI/badge.svg["Build Status", link="https://github.com/roamingthings/semanticlogger/actions?query=workflow%3A%22Java+CI%22"]
+Java: image:https://maven-badges.herokuapp.com/maven-central/de.roamingthings/semanticlogger/badge.svg["Maven Central (Java)", link="https://maven-badges.herokuapp.com/maven-central/de.roamingthings/semanticlogger/]
+Kotlin: image:https://maven-badges.herokuapp.com/maven-central/de.roamingthings/semanticlogger-kt/badge.svg["Maven Central (Kotlin)", link="https://maven-badges.herokuapp.com/maven-central/de.roamingthings/semanticlogger-kt/]
 
 This little library is inspired by the talk _Observability in einer Microservice Welt_ held on http://bed-con.org/2018/home[Berlin Expert Days 2018]
 by Andreas Weigel and Jakob Fels.
