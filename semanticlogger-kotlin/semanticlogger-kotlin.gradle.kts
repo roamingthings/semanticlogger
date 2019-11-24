@@ -8,7 +8,6 @@ plugins {
     `maven-publish`
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.dokka") version "0.10.0"
-    id("net.researchgate.release") version "2.8.1"
     id("org.jlleitschuh.gradle.ktlint") version "9.1.1"
     id("de.roamingthings.jvmtest")
     id("de.roamingthings.librarylicense")
@@ -164,10 +163,6 @@ publishing {
             }
         }
     }
-}
-
-release {
-    buildTasks = listOf("build")
 }
 
 tasks.withType<Javadoc>() {

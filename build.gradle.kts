@@ -1,14 +1,7 @@
-import org.gradle.api.JavaVersion.VERSION_1_8
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-import java.time.Year
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
+plugins {
+    id("net.researchgate.release") version "2.8.1"
+}
 
-fun envConfig() = object : ReadOnlyProperty<Any?, String?> {
-    override fun getValue(thisRef: Any?, property: KProperty<*>): String? =
-        if (ext.has(property.name)) {
-            ext[property.name] as? String
-        } else {
-            System.getenv(property.name)
-        }
+tasks.register("build") {
+    dependsOn(":semanticloggerJava:build", ":semanticloggerKotlin:build")
 }

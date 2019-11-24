@@ -4,7 +4,6 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 plugins {
     `java-library`
     `maven-publish`
-    id("net.researchgate.release") version "2.8.1"
     id("de.roamingthings.jvmtest")
     id("de.roamingthings.librarylicense")
     id("de.roamingthings.librarysigning")
@@ -115,10 +114,6 @@ publishing {
             }
         }
     }
-}
-
-release {
-    buildTasks = listOf("build")
 }
 
 tasks.withType<Javadoc>() {
