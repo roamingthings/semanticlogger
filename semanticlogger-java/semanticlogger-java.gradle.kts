@@ -150,6 +150,7 @@ publishing {
             from(components["java"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
+            artifactId = "semanticlogger"
 
             pom {
                 name.set("Semantic Logging (Java Version)")

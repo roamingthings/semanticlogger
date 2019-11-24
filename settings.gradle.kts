@@ -1,7 +1,7 @@
 rootProject.name = "semanticlogger"
 
-include("semanticlogger-java")
-include("semanticlogger-kotlin")
+include("semanticloggerJava")
+include("semanticloggerKotlin")
 
 val upperCaseLetters = "\\p{Upper}".toRegex()
 

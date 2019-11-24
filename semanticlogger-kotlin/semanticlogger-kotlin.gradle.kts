@@ -199,9 +199,10 @@ publishing {
             from(components["java"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["dokkaJar"])
+            artifactId = "semanticlogger-kt"
 
             pom {
-                name.set("Semantic Logging")
+                name.set("Semantic Logging (Kotlin Version)")
                 description.set("A Library to add semantic logging to your JVM project using SLF4J.")
                 url.set("https://github.com/roamingthings/semanticlogger")
                 licenses {
